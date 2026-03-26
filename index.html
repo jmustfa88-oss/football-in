@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Football Quiz</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+              url("https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a");
+  background-size: cover;
+  background-position: center;
+  text-align: center;
+  color: white;
+}
+
+.container {
+  background: white;
+  color: black;
+  padding: 20px;
+  margin: 50px auto;
+  width: 320px;
+  border-radius: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  border: none;
+  background: #2a5298;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #1e3c72;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+.timer { color: red; }
+
+/* الألوان */
+.correct { background: green !important; }
+.wrong { background: red !important; }
+
+/* نار */
+.fire {
+  animation: fire 0.4s;
+}
+@keyframes fire {
+  0% { box-shadow: 0 0 5px orange; }
+  50% { box-shadow: 0 0 20px red; }
+  100% { box-shadow: 0 0 5px orange; }
+}
+
+/* اهتزاز */
+.shake {
+  animation: shake 0.3s;
+}
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="timer">⏱️ الوقت: <span id="time">10</span></div>
+
+<h2 id="question"></h2>
+
+<button id="b0"></button>
+<button id="b1"></button>
+<button id="b2"></button>
+<button id="b3"></button>
+
+<h3 id="score">النقاط: 0</h3>
+<h3 id="high">🏆 أعلى نتيجة: 0</h3>
+<p id="result"></p>
+</div>
+
+<script>
+
+let score = 0;
+let qIndex = 0;
+let time = 10;
+let timer;
+
+// صوت
+function soundCorrect(){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let o = ctx.createOscillator();
+  o.frequency.value = 700;
+  o.connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + 0.2);
+}
+
+function soundWrong(){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let o = ctx.createOscillator();
+  o.frequency.value = 200;
+  o.connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + 0.3);
+}
+
+// أسئلة
+let questions = [
+{q:"من أكثر منتخب فاز بكأس العالم؟",a:["ألمانيا","البرازيل","الأرجنتين","فرنسا"],c:1},
+{q:"من أول منتخب فاز بكأس العالم؟",a:["البرازيل","الأرجنتين","الأوروغواي","ألمانيا"],c:2},
+{q:"من هداف دوري الأبطال؟",a:["ميسي","رونالدو","بنزيما","هالاند"],c:1},
+{q:"من أسرع لاعب بالعالم حاليا؟",a:["مبابي","نيمار","صلاح","هالاند"],c:0},
+{q:"أين مقر الفيفا؟",a:["فرنسا","سويسرا","ألمانيا","إسبانيا"],c:1},
+{q:"من سجل هدف يوفنتوس الوحيد في نهائي 2017 ضد ريال مدريد؟",a:["ديبالا","هيغواين","ماندزوكيتش","بوجبا"],c:2},
+{q:"من كان حارس ليفربول في نهائي 2018 ضد ريال مدريد؟",a:["أليسون","مينوليه","كاريوس","دوديك"],c:2},
+{q:"من هداف الدوري الإنجليزي التاريخي؟",a:["روني","آلان شيرر","صلاح","أجويرو"],c:1},
+{q:"من هداف مانشستر سيتي التاريخي؟",a:["هالاند","أجويرو","دي بروين","سترلينغ"],c:1},
+{q:"من فاز بالدوري الإسباني 2014؟",a:["برشلونة","ريال مدريد","أتلتيكو مدريد","فالنسيا"],c:2},
+{q:"من هداف كأس العالم 2018؟",a:["مبابي","هاري كين","رونالدو","لوكاكو"],c:1},
+{q:"من أفضل حارس في كأس العالم 2018؟",a:["كورتوا","لوريس","نوير","دي خيا"],c:0},
+{q:"من فاز بالدوري الإيطالي 2022؟",a:["يوفنتوس","ميلان","إنتر","نابولي"],c:1},
+{q:"من كان حارس ريال مدريد في نهائي 2014؟",a:["كاسياس","ناڤاس","لوبيز","كورتوا"],c:0},
+{q:"من فاز بدوري أبطال أوروبا 2004؟",a:["ريال مدريد","ميلان","بورتو","تشيلسي"],c:2},
+{q:"في أي عام فازت إسبانيا بكأس العالم؟",a:["2006","2010","2014","2018"],c:1}
+];
+
+// عشوائي
+questions.sort(() => Math.random() - 0.5);
+
+// هاي سكور
+let high = localStorage.getItem("high") || 0;
+document.getElementById("high").innerText = "🏆 أعلى نتيجة: " + high;
+
+// تايمر
+function startTimer(){
+  time = 10;
+  document.getElementById("time").innerText = time;
+
+  timer = setInterval(()=>{
+    time--;
+    document.getElementById("time").innerText = time;
+if(time == 0){
+      clearInterval(timer);
+      document.getElementById("result").innerText = "انتهى الوقت ❌";
+      soundWrong();
+      setTimeout(next,1000);
+    }
+  },1000);
+}
+
+// تحميل
+function load(){
+  clearInterval(timer);
+
+  let q = questions[qIndex];
+  document.getElementById("question").innerText = q.q;
+
+  let shuffled = q.a.map((ans,i)=>({ans,i}))
+    .sort(()=>Math.random()-0.5);
+
+  for(let i=0;i<4;i++){
+    let btn = document.getElementById("b"+i);
+
+    btn.classList.remove("correct","wrong","fire","shake");
+    btn.disabled = false;
+
+    btn.innerText = shuffled[i].ans;
+
+    btn.onclick = function(){
+      check(shuffled[i].i);
+    };
+  }
+
+  document.getElementById("result").innerText = "";
+  startTimer();
+}
+
+// تحقق
+function check(i){
+  clearInterval(timer);
+
+  let buttons = document.querySelectorAll("button");
+  buttons.forEach(btn => btn.disabled = true);
+
+  let correctText = questions[qIndex].a[questions[qIndex].c];
+  let clicked = event.target;
+
+  if(i == questions[qIndex].c){
+    score++;
+    document.getElementById("result").innerText = "صح 👏";
+    soundCorrect();
+
+    clicked.classList.add("correct","fire");
+
+  } else {
+    document.getElementById("result").innerText = "غلط ❌";
+    soundWrong();
+
+    clicked.classList.add("wrong","shake");
+
+    buttons.forEach(btn=>{
+      if(btn.innerText == correctText){
+        btn.classList.add("correct");
+      }
+    });
+  }
+
+  document.getElementById("score").innerText = "النقاط: " + score;
+
+  setTimeout(next,1000);
+}
+
+// النهاية
+function next(){
+  qIndex++;
+
+  if(qIndex < questions.length){
+    load();
+  } else {
+
+    if(score > high){
+      localStorage.setItem("high", score);
+    }
+
+    let total = questions.length;
+    let text = "";
+    let stars = "";
+
+    if(score >= total * 0.8){
+      text = "🏆 ممتاز!";
+      stars = "⭐️⭐️⭐️";
+    } else if(score >= total * 0.5){
+      text = "👍 جيد";
+      stars = "⭐️⭐️";
+    } else {
+      text = "😅 حاول مرة ثانية";
+      stars = "⭐️";
+    }
+
+    document.body.innerHTML =
+      "<h1>"+text+"</h1>" +
+      "<h2>"+stars+"</h2>" +
+      "<h2>نتيجتك: "+score+" من "+total+"</h2>" +
+      "<button onclick='location.reload()'>إعادة 🔄</button>";
+  }
+}
+
+window.onload = function(){
+  load();
+};
+
+</script>
+</body>
+</html>
