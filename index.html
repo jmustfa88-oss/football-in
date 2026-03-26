@@ -8,32 +8,42 @@
 body {
   font-family: Arial;
   background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-              url("https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a");
+  url("https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a");
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   text-align: center;
   color: white;
-}
+  font-size: 18px;
 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+min-height: 100vh;
+}
 .container {
   background: white;
   color: black;
-  padding: 20px;
-  margin: 50px auto;
-  width: 320px;
+  padding: 30px;
+  width: 95%;
+  max-width: 500px;
   border-radius: 15px;
 }
 
 button {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
+  padding: 15px;
+  margin: 10px 0;
+  font-size: 18px;
   border-radius: 10px;
   border: none;
-  background: #2a5298;
+  background: linear-gradient(45deg, #4facfe, #00f2fe);
   color: white;
   cursor: pointer;
-  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.8;
 }
 
 button:hover {
